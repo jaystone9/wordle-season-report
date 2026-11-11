@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Wordle Season Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: one poster column, chunky tiles as the unit of everything; players own a color, Wordle owns green and yellow */
+  color-scheme: light;
+  --paper:#F1EFFF; --card:#FFFFFF; --ink:#1C1447; --ink2:#5A5385; --line:#CFCAF0;
+  --green:#3DA35D; --yellow:#EDBD2B; --miss:#BDB8DA;
+  --p0:#D6307F; --p1:#2F5BEA; --p2:#E06A10;
+  --s2:#14532D; --s3:#1F7A43; --s4:#4CAF6E; --s5:#9AD4AB; --s6:#D5EEDB;
+  --display:"Bagel Fat One","Arial Black",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  background-image:radial-gradient(var(--line) 1.2px,transparent 1.2px);background-size:22px 22px}
+main{max-width:1040px;margin:0 auto;padding:28px 18px 80px;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;line-height:1.05}
+h2{font-size:clamp(28px,5vw,44px)}
+h3{font-size:22px}
+p{margin:0;max-width:65ch}
+.sub{color:var(--ink2);font-weight:500}
+.num{font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--p1);outline-offset:2px}
+
+/* hero */
+.hero{gap:22px;padding-top:10px}
+.title{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ht{width:clamp(44px,11vw,92px);aspect-ratio:1;display:grid;place-items:center;font-family:var(--display);
+  font-size:clamp(28px,7.4vw,62px);color:#fff;border:3px solid var(--ink);border-radius:10px;box-shadow:4px 4px 0 var(--ink);
+  transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.ht:nth-child(odd){transform:rotate(-3deg)} .ht:nth-child(even){transform:rotate(2.5deg)}
+.ht:hover{transform:rotate(0) translateY(-8px) scale(1.06)}
+.ht.g{background:var(--green)} .ht.y{background:var(--yellow);color:var(--ink)} .ht.x{background:var(--ink)}
+.hero h1{font-size:clamp(30px,6vw,58px)}
+.hero h1 em{font-style:normal;background:var(--yellow);padding:0 .15em;border-radius:8px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:2px solid var(--ink);border-radius:999px;padding:4px 12px;font-weight:700;font-size:14px}
+
+/* player cards */
+.players{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.pc{background:var(--card);border:3px solid var(--ink);border-radius:16px;box-shadow:6px 6px 0 var(--pc);padding:16px;display:flex;flex-direction:column;gap:10px;position:relative}
+.pc .rank{position:absolute;top:-14px;right:14px;background:var(--pc);color:#fff;font-family:var(--display);border:3px solid var(--ink);border-radius:999px;padding:2px 12px;font-size:16px}
+.pc .nm{display:flex;align-items:center;gap:8px;font-family:var(--display);font-size:26px}
+.dot{width:14px;height:14px;border-radius:4px;background:var(--pc);border:2px solid var(--ink);flex:none}
+.pc .big{font-family:var(--display);font-size:64px;line-height:.9}
+.pc .cap{font-size:13px;color:var(--ink2);font-weight:600}
+.dist{display:grid;grid-template-columns:18px 1fr;gap:4px 8px;align-items:center;font-weight:700;font-size:13px}
+.bar{height:20px;min-width:22px;background:var(--pc);border-radius:0 4px 4px 0;color:#fff;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:12px}
+.bar.zero{background:var(--line);color:var(--ink2)}
+.mini{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;font-weight:600;color:var(--ink2)}
+.mini b{color:var(--ink)}
+
+/* board */
+.panel{background:var(--card);border:3px solid var(--ink);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.months{display:flex;flex-wrap:wrap;gap:14px 20px}
+.month{display:flex;flex-direction:column;gap:6px}
+.month>span{font-family:var(--display);font-size:14px;color:var(--ink2)}
+.days{display:flex;flex-wrap:wrap;gap:3px}
+.day{background:none;border:2px solid transparent;border-radius:6px;padding:1px;display:flex;flex-direction:column;gap:2px}
+.day:hover{border-color:var(--ink2)} .day.sel{border-color:var(--ink);background:var(--yellow)}
+.c{width:20px;height:20px;border-radius:4px;display:grid;place-items:center;font-size:11px;font-weight:800}
+.c.na{background:transparent;border:1.5px dashed var(--line)}
+.c.v2{background:var(--s2);color:#fff}.c.v3{background:var(--s3);color:#fff}.c.v4{background:var(--s4);color:#fff}
+.c.v5{background:var(--s5)}.c.v6{background:var(--s6)}.c.v7{background:var(--ink);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;font-weight:600;color:var(--ink2)}
+.legend .c{display:inline-grid}
+.lg{display:inline-flex;gap:5px;align-items:center}
+.rowkey{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:700}
+
+/* replay */
+.replay{background:var(--ink);color:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:16px;box-shadow:6px 6px 0 var(--yellow)}
+.rhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.rhead h3{font-size:26px}
+.rhead .when{color:#C9C4EE;font-weight:600}
+.ctl{display:flex;gap:6px;flex-wrap:wrap}
+.ctl button{background:#fff;color:var(--ink);border:0;border-radius:999px;padding:6px 14px;font-weight:800;font-size:14px}
+.ctl button:hover{background:var(--yellow)}
+.verdict{font-family:var(--display);font-size:22px;color:var(--yellow)}
+.grids{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.gcol{display:flex;flex-direction:column;gap:8px;align-items:center}
+.gname{display:flex;gap:8px;align-items:center;font-weight:800}
+.gname .dot{border-color:#fff}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:min(100%,190px)}
+.t{aspect-ratio:1;border-radius:5px;background:#3A3170}
+.t.g{background:var(--green)}.t.y{background:var(--yellow)}.t.x{background:#6F68A0}.t.e{background:transparent;border:1.5px solid #3A3170}
+.t.flip{animation:flip .45s both}
+@keyframes flip{0%{transform:rotateX(0)}45%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.gscore{font-family:var(--display);font-size:30px}
+.gmeta{font-size:13px;color:#C9C4EE;font-weight:600;text-align:center}
+.crown{color:var(--yellow)}
+
+/* quilt */
+.quilts{display:flex;flex-direction:column;gap:16px}
+.qrow{display:flex;flex-direction:column;gap:6px}
+.qhead{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-weight:700}
+.qhead .nm{font-family:var(--display);font-size:20px;display:flex;gap:8px;align-items:center}
+.qhead span{font-size:13px;color:var(--ink2)}
+.quilt{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end}
+.qg{display:grid;grid-template-columns:repeat(5,6px);gap:1px;padding:2px;border:0;background:none;border-radius:3px}
+.qg:hover{background:var(--ink)} .qg.sel{background:var(--pc);outline:2px solid var(--ink)}
+.qg i{width:6px;height:6px;border-radius:1px;background:var(--miss)}
+.qg i.g{background:var(--green)}.qg i.y{background:var(--yellow)}
+
+/* charts */
+.chartwrap{position:relative}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:var(--body);fill:var(--ink2);font-size:12px;font-weight:600}
+.keys{display:flex;gap:14px;flex-wrap:wrap;font-weight:700;font-size:14px}
+.keys span{display:inline-flex;gap:6px;align-items:center}
+#tip{position:fixed;z-index:9;pointer-events:none;background:var(--ink);color:#fff;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:600;line-height:1.4;opacity:0;transition:opacity .1s;max-width:240px}
+#tip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+
+/* h2h */
+.h2h{display:flex;flex-direction:column;gap:14px}
+.mu{display:flex;flex-direction:column;gap:5px}
+.mu .lab{display:flex;justify-content:space-between;font-weight:800}
+.seg{display:flex;gap:2px;height:34px}
+.seg div{display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;min-width:44px}
+.seg div:first-child{border-radius:6px 0 0 6px}.seg div:last-child{border-radius:0 6px 6px 0}
+.seg .tie{background:var(--miss);color:var(--ink)}
+.crowns{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.crowns div{border:2px solid var(--ink);border-radius:12px;padding:10px 12px;background:var(--paper)}
+.crowns b{font-family:var(--display);font-weight:400;font-size:30px;display:block;line-height:1}
+.crowns small{font-weight:600;color:var(--ink2)}
+
+/* styles + moments */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.sc{background:var(--card);border:3px solid var(--ink);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;border-top:14px solid var(--pc)}
+.sc .who{font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.sc ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.moments{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.mo{text-align:left;background:var(--card);border:3px solid var(--ink);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:transform .15s,box-shadow .15s}
+.mo:hover{transform:translate(-3px,-3px);box-shadow:6px 6px 0 var(--ink)}
+.mo .d{font-size:12px;font-weight:800;color:var(--ink2);letter-spacing:.06em;text-transform:uppercase}
+.mo h3{font-size:20px}
+.mo p{font-size:14px}
+.mo .go{font-size:13px;font-weight:800;color:var(--p1);margin-top:auto}
+.note{font-size:13px;color:var(--ink2);border-top:2px dashed var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+.note p{max-width:80ch}
+@media (max-width:760px){.players,.three,.crowns{grid-template-columns:1fr}.grids{gap:8px}.gscore{font-size:22px}.pc .big{font-size:52px}}
+@media (prefers-reduced-motion:reduce){.t.flip{animation:none}.ht,.mo{transition:none}}
+</style>
+</head>
+<body>
+<div id="tip"></div>
+<main>
+<section class="hero">
+  <div class="title" aria-hidden="true">
+    <div class="ht g">W</div><div class="ht y">O</div><div class="ht x">R</div><div class="ht g">D</div><div class="ht y">L</div><div class="ht g">E</div>
+  </div>
+  <h1>The Season Report: <em>Michelle, Maddy &amp; Jay</em></h1>
+  <p class="sub">Every score grid from the three of you, counted, ranked and replayable. Lower is better. Bragging rights are permanent.</p>
+  <div class="facts"><span class="chip">172 grids</span><span class="chip">67 puzzles</span><span class="chip">#1,881 to #1,971</span><span class="chip">Aug 13 to Nov 11, 2026</span><span class="chip">3,790 tiles</span></div>
+</section>
+
+<section>
+  <h2>The standings</h2>
+  <p class="sub">Average guesses per puzzle played. A miss (X) counts as 7.</p>
+  <div class="players" id="players"></div>
+</section>
+
+<section>
+  <h2>Replay any day</h2>
+  <p class="sub">Each column is one puzzle. Top to bottom: Michelle, Maddy, Jay. Pick a day to see all three grids.</p>
+  <div class="panel">
+    <div class="legend"><span>Solved in</span>
+      <span class="lg"><span class="c v2">2</span></span><span class="lg"><span class="c v3">3</span></span><span class="lg"><span class="c v4">4</span></span><span class="lg"><span class="c v5">5</span></span><span class="lg"><span class="c v6">6</span></span><span class="lg"><span class="c v7">X</span> missed</span><span class="lg"><span class="c na"></span> no grid</span>
+    </div>
+    <div class="months" id="board"></div>
+  </div>
+  <div class="replay" id="replay"></div>
+</section>
+
+<section>
+  <h2>Every tile they played</h2>
+  <p class="sub">All 172 games as tiny grids, in order. Long columns are bad days. Tap any game to replay it.</p>
+  <div class="panel quilts" id="quilts"></div>
+</section>
+
+<section>
+  <h2>Who is heating up</h2>
+  <p class="sub">Rolling average over each player's last 10 games. Higher on the chart means fewer guesses, so up is good.</p>
+  <div class="panel">
+    <div class="keys" id="keys"></div>
+    <div class="chartwrap"><svg id="form" viewBox="0 0 900 320" role="img" aria-label="Rolling 10-game average by player"></svg></div>
+  </div>
+</section>
+
+<section>
+  <h2>Head to head</h2>
+  <p class="sub">Days when both players have a grid. Fewer guesses wins the day.</p>
+  <div class="panel">
+    <div class="h2h" id="h2h"></div>
+    <p class="sub" style="font-size:14px">Daily crowns, counting any day with at least two grids:</p>
+    <div class="crowns" id="crowns"></div>
+  </div>
+</section>
+
+<section>
+  <h2>Playing styles</h2>
+  <div class="three">
+    <div class="sc" style="--pc:var(--p0)"><span class="who">Michelle</span><h3>The Clean-Slate Chemist</h3>
+      <ul><li>Ten times her second guess came back fully gray, the mark of someone burning five fresh letters. Maddy did that once, Jay three times.</li><li>Best openers of the three: 1.58 colored tiles on guess one.</li><li>Fell into the one-letter-off trap only 3 times.</li><li>Steady as it gets: 41 of 55 games landed on a 4 or 5.</li></ul></div>
+    <div class="sc" style="--pc:var(--p1)"><span class="who">Maddy</span><h3>The Iron Streak</h3>
+      <ul><li>Has a grid for 64 of 67 puzzles, the best attendance.</li><li>Three 2s, the most of anyone.</li><li>Greenest board: 46% of her tiles are green.</li><li>The catch: 10 games stuck re-guessing the same greens, including four identical rows in a row.</li></ul></div>
+    <div class="sc" style="--pc:var(--p2)"><span class="who">Jay</span><h3>The Sniper</h3>
+      <ul><li>Best average of the three at 4.28.</li><li>A quarter of his games (14 of 53) done in three or fewer.</li><li>16 solo daily wins, the most.</li><li>Also leads in misses (2) and skipped puzzles (14).</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>Moments</h2>
+  <p class="sub">Tap one to load its grids in the replay.</p>
+  <div class="moments" id="moments"></div>
+</section>
+
+<div class="note">
+  <p><b>How this was counted.</b> Only the Wordle score grids are used: puzzle number, score and tile colors. A grid that appeared twice is counted once. A miss (X) counts as 7. Head-to-head and crown counts compare scores on days when both players have a grid.</p>
+</div>
+</main>
+<script>
+const RAW=[[0,1881,"3","gyxxx/xyxxy/ggggg"],[1,1881,"5","xggxx/xggxy/xgggx/xgggx/ggggg"],[2,1881,"5","yxxxx/xxgxy/xgggg/xgggg/ggggg"],[2,1882,"6","xxxxx/xxxgg/xxggg/xxggg/yxggg/ggggg"],[0,1882,"5","xxxxg/xxxxx/yyxxx/xxggg/ggggg"],[0,1885,"5","xxxyg/xxxxx/xxgxx/gggxg/ggggg"],[1,1885,"5","xgyxy/ggxxg/ggxxg/gggxg/ggggg"],[2,1885,"2","ygxyx/ggggg"],[1,1886,"3","gxxyx/gyxyy/ggggg"],[2,1886,"4","yxxxx/xyxyy/gyyyx/ggggg"],[0,1886,"4","gxxyx/xxxxx/ggyyx/ggggg"],[0,1887,"5","xyxxx/xxggx/xxxxx/xgggg/ggggg"],[2,1887,"3","xgxyx/xggxx/ggggg"],[1,1887,"4","xxxyx/xxggx/xgggg/ggggg"],[1,1888,"6","xyxxx/ygxxg/xggxg/xggxg/xggxg/ggggg"],[0,1888,"4","xxxxx/xgxgg/xgxgg/ggggg"],[2,1888,"5","xxxyy/xyxxy/xxyxy/xgxgg/ggggg"],[0,1889,"2","xxgyg/ggggg"],[1,1889,"2","xyyyy/ggggg"],[2,1889,"4","xxgxy/gxgxx/gggxg/ggggg"],[1,1892,"6","xxxxx/xxgxx/xxgxx/xggxx/xggxg/ggggg"],[0,1891,"5","xgxxy/xgyxx/ygyxx/xxxyy/ggggg"],[2,1892,"4","xyxxy/xyxyx/gggxg/ggggg"],[2,1893,"6","gxxxx/gxxxx/gxxxx/gggxx/gggxx/ggggg"],[0,1893,"5","xgxxx/xxxyx/xxxyx/gxggg/ggggg"],[1,1893,"5","xxxxx/xxxxx/xggxx/xgggg/ggggg"],[2,1894,"5","xxxxx/xxyxx/ggxyx/ggggx/ggggg"],[1,1894,"6","xxyxx/xgxxx/ggxxx/ggxxx/ggxxg/ggggg"],[1,1895,"4","xxxxg/yxxgg/xyxxx/ggggg"],[0,1895,"4","xxxyx/yxxxx/xyyxx/ggggg"],[0,1894,"6","xxyxx/xxyxx/gxxxx/ggxxg/ggxgg/ggggg"],[2,1895,"3","xxyxg/xyxxx/ggggg"],[1,1896,"4","xxxxy/gxgxx/gxgxg/ggggg"],[2,1896,"5","xxxxx/xxxxx/gxxgx/gyxgx/ggggg"],[1,1899,"6","xyxxx/xgggg/xgggg/xgggg/xgggg/ggggg"],[2,1899,"X","xxxxx/xxxxx/xxgxx/xgggg/xgggg/xgggg"],[0,1899,"4","xxxxx/xyyxx/xxxgy/ggggg"],[2,1900,"5","xxxgx/xyyxx/ggxgx/ggxgg/ggggg"],[1,1900,"5","xxxyy/xyyxx/gxxyy/gggxx/ggggg"],[0,1900,"6","xxxxy/xxxxx/xxyxx/xyxyy/xgygx/ggggg"],[2,1901,"5","xyxxx/xyxgg/yxxgg/xxggg/ggggg"],[1,1901,"5","xxxxx/xgxxx/xggxx/xyyxx/ggggg"],[0,1901,"5","xyxxy/xxxyx/xgxxx/ygxgg/ggggg"],[1,1902,"6","xxxyx/yxgxy/yygxx/yxggg/xgggg/ggggg"],[0,1902,"5","yxxyx/xxxxx/xxgxx/xgggg/ggggg"],[1,1903,"5","xxxxx/xyyxx/yxxyy/yyxyx/ggggg"],[2,1903,"6","xxxxx/xyyxx/xxxgg/xgxgg/ggxgg/ggggg"],[0,1903,"6","xxyxy/xxxxx/xxxxx/yyyxy/ygggx/ggggg"],[2,1907,"6","xxxxy/xyxgx/ggxgx/ggygx/ggxgg/ggggg"],[1,1907,"5","xxxxx/xxygx/ggygx/ggxgg/ggggg"],[0,1907,"6","xyxxy/xxyxx/xxyyx/xyyyg/ggxgg/ggggg"],[0,1908,"4","yxxyx/xgxxx/ggyyx/ggggg"],[1,1908,"5","xxxxg/xxxyg/xyxyg/xgggg/ggggg"],[1,1909,"4","xxxxx/xgxxx/xgxxx/ggggg"],[0,1909,"5","xyxxx/xxxxg/xxxgy/xxygg/ggggg"],[0,1910,"4","yxyyy/yyxgy/ggxgy/ggggg"],[1,1910,"4","xyyxy/yyxyy/yyyyg/ggggg"],[2,1910,"4","yxyxy/xyxgy/xxggg/ggggg"],[0,1911,"3","xxxgx/yxyxg/ggggg"],[2,1911,"4","xxxyx/gxxxx/gxxxg/ggggg"],[1,1911,"5","xxxxy/yxxxx/xxyxx/xxxxy/ggggg"],[1,1913,"4","xyyxx/gyyxx/ggyyy/ggggg"],[0,1913,"4","yxxyy/xyxxy/gggyy/ggggg"],[2,1913,"3","xxxgx/xyxgx/ggggg"],[0,1914,"4","xygxx/xxyxx/ygxxx/ggggg"],[1,1914,"3","xxyyy/ggggx/ggggg"],[2,1914,"3","xyxyx/yxgxy/ggggg"],[0,1915,"4","yxxyx/yxxxg/xxxxx/ggggg"],[2,1915,"3","yyxyx/ygxxy/ggggg"],[1,1915,"4","xxxxy/yxxxy/yggxg/ggggg"],[1,1916,"5","xxyxx/yxxxy/xggyy/gggxg/ggggg"],[2,1916,"4","gxyxy/gyxyx/gyxyx/ggggg"],[0,1916,"5","xyyxx/xxxxx/xyxxx/xggyy/ggggg"],[1,1917,"4","xxxyx/yyxxy/gygxy/ggggg"],[0,1917,"4","gxxxx/xxxyy/xxxxg/ggggg"],[2,1917,"5","gxxxx/gygxx/gxggy/ggggx/ggggg"],[0,1920,"4","xxyxg/xyxxx/gxxyx/ggggg"],[1,1920,"6","xyyyx/xyyyx/ygxxy/xgygx/ggxgg/ggggg"],[2,1920,"5","xxxxx/gyyxx/gyyyx/ggygx/ggggg"],[1,1921,"6","ggyxx/gggxg/gggxg/gggxg/gggxg/ggggg"],[0,1921,"6","ggxxx/gggxx/gggxx/gggxg/gggxg/ggggg"],[2,1921,"3","xxggg/xxggg/ggggg"],[1,1922,"4","xyxxx/ygxgx/xgggx/ggggg"],[0,1922,"6","xyxxy/xxxyx/xxxxx/ygyxg/xgggg/ggggg"],[2,1922,"3","xygxx/xxggg/ggggg"],[1,1923,"3","xxxxy/yxxxx/ggggg"],[0,1923,"4","yxxxx/xgyxx/xxxxg/ggggg"],[2,1923,"4","xxxxy/xxxyx/xgxxy/ggggg"],[0,1924,"5","yxxxx/xyxyx/yxxxx/xggyy/ggggg"],[1,1924,"3","yxxgg/xxxyy/ggggg"],[2,1924,"4","xxxyg/gxxxg/gxygg/ggggg"],[1,1926,"2","gxgxg/ggggg"],[2,1927,"5","xxxxx/xyxxx/yyxyx/xgggy/ggggg"],[1,1927,"3","xyxyx/gggxg/ggggg"],[2,1928,"4","yxyxx/xyyxx/xxxyx/ggggg"],[1,1928,"4","yxyxx/xyxgx/yxxgx/ggggg"],[1,1929,"6","xyxxx/xxxgg/xgxgg/xgxgg/xgxgg/ggggg"],[2,1929,"5","xxyxx/xxxxy/xgxgx/xgygg/ggggg"],[1,1930,"4","xxxyx/xyxxy/yxxxx/ggggg"],[0,1930,"5","xyxyy/xxxxx/xxxxg/ggxyg/ggggg"],[2,1930,"5","xxxyy/yyxxx/gxgxx/gggxx/ggggg"],[2,1931,"5","xxxxx/xxxxy/yxgxx/xxyxg/ggggg"],[1,1931,"5","xxxxy/yxxxx/xyxyx/xygxy/ggggg"],[0,1931,"6","xyxxg/yxxxy/xxxxx/yyyxg/xygyg/ggggg"],[0,1934,"5","xxyxx/xxxxx/yyxxx/xgyyy/ggggg"],[1,1934,"4","xyxxx/yxxxx/ygxyx/ggggg"],[2,1934,"4","yyxxx/yyxyx/xgyyy/ggggg"],[1,1935,"4","xxyyx/yxyxx/yggxx/ggggg"],[0,1935,"4","xxxyx/yxgxx/xxyxg/ggggg"],[2,1936,"X","xyxxg/ggxxg/gggxg/gggxg/gggxg/gggxg"],[0,1936,"X","xxxxy/xyxyx/gxxxx/gggxg/gggxg/gggxg"],[1,1936,"5","xgxxx/xggxy/xggyg/gggxg/ggggg"],[0,1937,"4","ggxxy/gggxx/ggggx/ggggg"],[2,1937,"3","yxxyy/yyyyy/ggggg"],[1,1937,"4","ggxxx/ggxxy/ggxgx/ggggg"],[2,1938,"4","xyyxx/xyyxx/ggygx/ggggg"],[0,1938,"3","xxyxg/xxygx/ggggg"],[1,1938,"4","xyyxx/xgyyx/ggxgg/ggggg"],[1,1941,"4","xyxxx/yxygx/ygygy/ggggg"],[2,1941,"4","xxyxx/xxxxx/xxygy/ggggg"],[0,1941,"4","xxxxx/yyxyx/xxgxy/ggggg"],[1,1942,"5","xyxyy/yyyxx/xyxgy/xxggg/ggggg"],[0,1942,"4","xxxyg/xyxxx/xxgxx/ggggg"],[1,1943,"4","xxxxx/gxxgx/gxygg/ggggg"],[1,1944,"4","xxxxg/yxxxg/gxxgg/ggggg"],[0,1944,"4","xxxxx/xyxxy/xgyxx/ggggg"],[2,1942,"6","xyyxx/yyxyx/yyxyx/xxggg/xgggg/ggggg"],[2,1943,"4","xxxxy/gxyxy/gggxx/ggggg"],[2,1944,"3","xxyyx/gxxxx/ggggg"],[1,1945,"4","xxxxx/xggxx/gggxx/ggggg"],[1,1948,"2","ggxyy/ggggg"],[2,1948,"2","gxgxy/ggggg"],[1,1949,"6","xgxyx/xgggg/xgggg/xgggg/xgggg/ggggg"],[2,1949,"5","xgxxy/xgxgx/ygxgx/xgggg/ggggg"],[1,1950,"3","xxyxx/xyxgy/ggggg"],[2,1950,"5","xxxxy/xxyyx/xxyyx/ggxxg/ggggg"],[0,1951,"6","yyxxy/xgxxx/xxxxx/xxyxx/gggyx/ggggg"],[0,1950,"4","xxxxx/xgxxy/gxxxg/ggggg"],[1,1951,"4","yxxxx/yyxxx/xyyyg/ggggg"],[1,1952,"X","xyxxx/xxggx/xxggx/xxggy/xgggg/xgggg"],[0,1952,"5","xyxyy/yxxxx/gyyxx/gggxg/ggggg"],[1,1955,"5","xxxxx/xxxyx/xxxxy/ggxxg/ggggg"],[0,1955,"4","xxxxx/xgxxx/xxxyg/ggggg"],[1,1956,"5","xxxxx/xxyxx/xgyxx/xyxyx/ggggg"],[2,1956,"4","xxyxx/xxxyy/ggggx/ggggg"],[0,1956,"5","xxxyx/xxxyy/xxxgx/xxggy/ggggg"],[1,1957,"5","yxxxx/xgxgx/xgggx/xgggg/ggggg"],[0,1958,"3","xyxxg/xxygx/ggggg"],[1,1958,"4","yyxxx/yggxx/xggxg/ggggg"],[2,1958,"5","xxxxx/xyyxx/xyyyx/xxxgg/ggggg"],[0,1959,"5","gxxyx/yyxxx/xxyxx/gyyyy/ggggg"],[1,1959,"4","xyxxy/gxyxx/ggxxg/ggggg"],[1,1962,"6","xxxxy/gygxx/gxgyx/gggxx/gggxx/ggggg"],[0,1962,"5","gyxxx/xxxgx/xxxxx/gxggg/ggggg"],[1,1963,"3","xgxxx/xgggg/ggggg"],[2,1963,"3","xyyxx/ygyxx/ggggg"],[0,1963,"5","xxxxx/xxxyx/gyxxx/ggyyx/ggggg"],[1,1964,"4","xxyxg/xgxxg/xgyxg/ggggg"],[0,1964,"5","xyxxx/xxxxy/xgxxg/xgygg/ggggg"],[2,1964,"4","xxxxx/xgyxx/xgxyx/ggggg"],[0,1965,"5","xxyxy/xxxxx/gxxxx/gggxx/ggggg"],[1,1966,"4","yxxxx/xgggg/xgggg/ggggg"],[1,1969,"4","xxgxx/xxgyx/xygxy/ggggg"],[0,1969,"4","xxgxx/gxyyx/xxxxg/ggggg"],[0,1970,"5","xyxxy/xyxxx/xyxxx/yggxy/ggggg"],[1,1970,"5","xxyyy/xxyxy/xgxyg/ggxxg/ggggg"],[2,1966,"4","ygxxx/xgxgy/xgggg/ggggg"],[2,1969,"4","xxgxx/xyxxx/yxgyg/ggggg"],[2,1970,"3","xxgxx/ygyxy/ggggg"],[1,1971,"3","xxxxx/xgxyy/ggggg"],[0,1971,"4","yyxxx/yxxxx/xxxxx/ggggg"],[2,1971,"3","xgxxg/gxxxy/ggggg"]];
+const P=[{n:'Michelle',c:'var(--p0)'},{n:'Maddy',c:'var(--p1)'},{n:'Jay',c:'var(--p2)'}];
+const G=RAW.map(([p,n,s,r])=>({p,n,s,v:s==='X'?7:+s,rows:r.split('/')}));
+const byDay=new Map();G.forEach(g=>{if(!byDay.has(g.n))byDay.set(g.n,[]);byDay.get(g.n)[g.p]=g});
+const days=[...byDay.keys()].sort((a,b)=>a-b);
+const $=s=>document.querySelector(s),el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const dt=n=>new Date(Date.UTC(2026,7,13)+(n-1881)*864e5);
+const fd=(n,o)=>dt(n).toLocaleDateString('en-US',Object.assign({timeZone:'UTC'},o||{weekday:'short',month:'short',day:'numeric'}));
+const num=n=>'#'+n.toLocaleString('en-US');
+const tip=$('#tip');
+function showTip(e,h){tip.innerHTML=h;tip.style.opacity=1;const w=tip.offsetWidth,x=Math.min(window.innerWidth-w-8,e.clientX+14);tip.style.left=Math.max(8,x)+'px';tip.style.top=(e.clientY+16)+'px'}
+function hideTip(){tip.style.opacity=0}
+
+/* standings */
+const stats=P.map((pl,i)=>{const gs=G.filter(g=>g.p===i),sum=gs.reduce((a,g)=>a+g.v,0);const d={};gs.forEach(g=>d[g.s]=(d[g.s]||0)+1);return{i,gs,avg:sum/gs.length,d}});
+const order=[...stats].sort((a,b)=>a.avg-b.avg);
+const rankName=['1st','2nd','3rd'];
+order.forEach((s,r)=>{const pl=P[s.i],c=el('div','pc');c.style.setProperty('--pc',pl.c);
+  const mx=Math.max(...Object.values(s.d));
+  let dist='';['1','2','3','4','5','6','X'].forEach(k=>{const v=s.d[k]||0;dist+=`<span>${k}</span><div><div class="bar num ${v?'':'zero'}" style="width:${v?Math.max(8,v/mx*100):0}%">${v}</div></div>`});
+  const three=(s.d['2']||0)+(s.d['3']||0);
+  c.innerHTML=`<span class="rank">${rankName[r]}</span><div class="nm"><span class="dot"></span>${pl.n}</div><div><div class="big num">${s.avg.toFixed(2)}</div><div class="cap">average guesses over ${s.gs.length} games</div></div><div class="dist">${dist}</div><div class="mini"><span><b>${three}</b> in three or fewer</span><span><b>${s.d.X||0}</b> missed</span></div>`;
+  $('#players').append(c)});
+
+/* board */
+let sel=1936;
+const months={};days.forEach(n=>{const k=fd(n,{month:'short'});(months[k]=months[k]||[]).push(n)});
+Object.entries(months).forEach(([m,ns])=>{const w=el('div','month');w.append(el('span','',m.toUpperCase()));const dv=el('div','days');
+  ns.forEach(n=>{const b=el('button','day');b.dataset.n=n;b.setAttribute('aria-label',`${num(n)}, ${fd(n)}`);
+    for(let i=0;i<3;i++){const g=byDay.get(n)[i];b.append(el('span','c num '+(g?'v'+g.v:'na'),g?g.s:''))}
+    b.onclick=()=>pick(n);
+    b.onmousemove=e=>showTip(e,`<b>${num(n)}</b> · ${fd(n)}<br>`+P.map((p,i)=>{const g=byDay.get(n)[i];return `<i style="background:${p.c}"></i>${p.n}: ${g?g.s+'/6':'no grid'}`}).join('<br>'));
+    b.onmouseleave=hideTip;dv.append(b)});
+  w.append(dv);$('#board').append(w)});
+const rk=el('div','rowkey',P.map(p=>`<span class="lg"><span class="dot" style="--pc:${p.c}"></span>${p.n}</span>`).join('')+'<span class="sub" style="font-size:13px">rows, top to bottom</span>');
+$('#board').before(rk);
+
+/* replay */
+function verdict(n){const gs=byDay.get(n).filter(Boolean);if(gs.length<2)return gs.length?`${P[gs[0].p].n} is the only grid for this one`:'';
+  const b=Math.min(...gs.map(g=>g.v));if(b===7)return 'Nobody got it';const w=gs.filter(g=>g.v===b);
+  if(w.length===gs.length)return gs.length===3?'Three-way tie':'Dead heat';
+  return w.map(g=>P[g.p].n).join(' and ')+(w.length>1?' share the day':' wins the day')}
+function pick(n,scroll){sel=n;document.querySelectorAll('.day').forEach(b=>b.classList.toggle('sel',+b.dataset.n===n));
+  document.querySelectorAll('.qg').forEach(b=>b.classList.toggle('sel',+b.dataset.n===n));
+  const gs=byDay.get(n),present=gs.filter(Boolean),best=Math.min(...present.map(g=>g.v));
+  const R=$('#replay');R.innerHTML='';
+  const h=el('div','rhead',`<div><h3>Wordle ${num(n)}</h3><div class="when">${fd(n,{weekday:'long',month:'long',day:'numeric'})}</div></div>`);
+  const ctl=el('div','ctl');[['Previous',()=>step(-1)],['Random day',()=>pick(days[Math.floor(Math.random()*days.length)])],['Next',()=>step(1)]].forEach(([t,f])=>{const b=el('button','',t);b.onclick=f;ctl.append(b)});
+  h.append(ctl);R.append(h,el('div','verdict',verdict(n)));
+  const gr=el('div','grids');
+  P.forEach((p,i)=>{const g=gs[i],col=el('div','gcol');col.append(el('div','gname',`<span class="dot" style="--pc:${p.c}"></span>${p.n}${g&&g.v===best&&best<7&&present.length>1?' <span class="crown" title="Best of the day">★</span>':''}`));
+    const grid=el('div','grid');
+    for(let r=0;r<6;r++)for(let k=0;k<5;k++){const row=g&&g.rows[r];const t=el('div','t '+(row?row[k]+' flip':'e'));if(row)t.style.animationDelay=(r*90+k*45)+'ms';grid.append(t)}
+    col.append(grid,el('div','gscore num',g?g.s+'/6':'·'),el('div','gmeta',g?'':'no grid'));gr.append(col)});
+  R.append(gr);
+  if(scroll)R.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'center'})}
+function step(d){const i=days.indexOf(sel)+d;if(i>=0&&i<days.length)pick(days[i])}
+
+/* quilt */
+stats.forEach(s=>{const pl=P[s.i],row=el('div','qrow');let g=0,y=0,t=0;s.gs.forEach(x=>x.rows.forEach(r=>{for(const ch of r){t++;if(ch==='g')g++;if(ch==='y')y++}}));
+  row.append(el('div','qhead',`<div class="nm"><span class="dot" style="--pc:${pl.c}"></span>${pl.n}</div><span class="num">${t.toLocaleString()} tiles · ${Math.round(g/t*100)}% green · ${Math.round(y/t*100)}% yellow</span>`));
+  const q=el('div','quilt');q.style.setProperty('--pc',pl.c);
+  s.gs.slice().sort((a,b)=>a.n-b.n).forEach(x=>{const b=el('button','qg');b.dataset.n=x.n;b.setAttribute('aria-label',`${pl.n} ${num(x.n)}: ${x.s}/6`);
+    b.innerHTML=x.rows.map(r=>[...r].map(ch=>`<i class="${ch}"></i>`).join('')).join('');
+    b.onclick=()=>pick(x.n,true);b.onmousemove=e=>showTip(e,`<i style="background:${pl.c}"></i>${pl.n} · ${num(x.n)}<br>${fd(x.n)} · ${x.s}/6`);b.onmouseleave=hideTip;q.append(b)});
+  row.append(q);$('#quilts').append(row)});
+
+/* form chart */
+(function(){const svg=$('#form'),W=900,H=320,m={l:40,r:92,t:14,b:30},ns='http://www.w3.org/2000/svg';
+  const mk=(t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);svg.append(e);return e};
+  const series=stats.map(s=>{const gs=s.gs.slice().sort((a,b)=>a.n-b.n),pts=[];for(let i=9;i<gs.length;i++){let t=0;for(let j=i-9;j<=i;j++)t+=gs[j].v;pts.push({n:gs[i].n,v:t/10})}return{i:s.i,pts}});
+  const all=series.flatMap(s=>s.pts.map(p=>p.v)),lo=Math.floor(Math.min(...all)*2)/2,hi=Math.ceil(Math.max(...all)*2)/2;
+  const x0=Math.min(...series.map(s=>s.pts[0].n)),x1=1971;
+  const X=n=>m.l+(n-x0)/(x1-x0)*(W-m.l-m.r),Y=v=>m.t+(v-lo)/(hi-lo)*(H-m.t-m.b);
+  for(let v=lo;v<=hi+1e-9;v+=.5){mk('line',{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),stroke:'var(--line)','stroke-width':1});mk('text',{x:m.l-8,y:Y(v)+4,'text-anchor':'end'}).textContent=v.toFixed(1)}
+  let last='';for(let n=x0;n<=x1;n++){if(dt(n).getUTCDate()===1){const lab=fd(n,{month:'short',day:'numeric'});mk('text',{x:X(n),y:H-8,'text-anchor':'middle'}).textContent=lab}}
+  const cross=mk('line',{y1:m.t,y2:H-m.b,stroke:'var(--ink)','stroke-width':1,'stroke-dasharray':'3 3',opacity:0});
+  const ends=[];
+  series.forEach(s=>{mk('path',{d:s.pts.map((p,k)=>(k?'L':'M')+X(p.n).toFixed(1)+' '+Y(p.v).toFixed(1)).join(''),fill:'none',stroke:P[s.i].c,'stroke-width':3,'stroke-linejoin':'round','stroke-linecap':'round'});
+    const e=s.pts[s.pts.length-1];mk('circle',{cx:X(e.n),cy:Y(e.v),r:5,fill:P[s.i].c,stroke:'var(--card)','stroke-width':2});ends.push({i:s.i,x:X(e.n),y:Y(e.v),v:e.v})});
+  ends.sort((a,b)=>a.y-b.y);for(let k=1;k<ends.length;k++)if(ends[k].y-ends[k-1].y<16)ends[k].y=ends[k-1].y+16;
+  ends.forEach(e=>{const t=mk('text',{x:W-m.r+10,y:e.y+4});t.style.fill='var(--ink)';t.style.fontWeight=800;t.textContent=P[e.i].n+' '+e.v.toFixed(1)});
+  const dots=series.map(s=>mk('circle',{r:5,fill:P[s.i].c,stroke:'var(--card)','stroke-width':2,opacity:0}));
+  const hit=mk('rect',{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:'transparent'});
+  hit.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W;const n=Math.max(x0,Math.min(x1,Math.round(x0+(px-m.l)/(W-m.l-m.r)*(x1-x0))));
+    cross.setAttribute('x1',X(n));cross.setAttribute('x2',X(n));cross.setAttribute('opacity',.6);
+    let h=`<b>${fd(n)}</b>`;series.forEach((s,k)=>{const p=[...s.pts].reverse().find(p=>p.n<=n);if(p){dots[k].setAttribute('cx',X(p.n));dots[k].setAttribute('cy',Y(p.v));dots[k].setAttribute('opacity',1);h+=`<br><i style="background:${P[s.i].c}"></i>${P[s.i].n}: ${p.v.toFixed(1)}`}else dots[k].setAttribute('opacity',0)});showTip(e,h)});
+  hit.addEventListener('mouseleave',()=>{hideTip();cross.setAttribute('opacity',0);dots.forEach(d=>d.setAttribute('opacity',0))});
+  $('#keys').innerHTML=P.map(p=>`<span><span class="dot" style="--pc:${p.c}"></span>${p.n}</span>`).join('');
+})();
+
+/* head to head */
+[[2,0],[1,0],[2,1]].forEach(([a,b])=>{let w=0,l=0,t=0;days.forEach(n=>{const d=byDay.get(n);if(d[a]&&d[b]){if(d[a].v<d[b].v)w++;else if(d[a].v>d[b].v)l++;else t++}});
+  const tot=w+l+t,mu=el('div','mu');mu.innerHTML=`<div class="lab"><span>${P[a].n}</span><span class="sub" style="font-size:13px">${tot} shared days</span><span>${P[b].n}</span></div><div class="seg num"><div style="flex:${w};background:${P[a].c}">${w} wins</div><div class="tie" style="flex:${t}">${t} ties</div><div style="flex:${l};background:${P[b].c}">${l} wins</div></div>`;$('#h2h').append(mu)});
+P.forEach((p,i)=>{let solo=0,sh=0;days.forEach(n=>{const d=byDay.get(n).filter(Boolean);if(d.length<2||!byDay.get(n)[i])return;const b=Math.min(...d.map(g=>g.v));if(byDay.get(n)[i].v!==b)return;d.filter(g=>g.v===b).length===1?solo++:sh++});
+  $('#crowns').append(el('div','',`<small><span class="dot" style="--pc:${p.c};display:inline-block;vertical-align:-1px"></span> ${p.n}</small><b class="num">${solo}</b><small>solo wins, plus ${sh} shared</small>`))});
+
+/* moments */
+[[1885,'Two on the board','Jay solves in 2 while Michelle and Maddy both need 5.'],
+ [1889,'Twin deuces','Michelle and Maddy both solve it in two. Maddy opened with four yellows. The easiest day on record.'],
+ [1899,'The _GGGG trap','Maddy guesses the same four greens four times before landing it in 6. Jay never escapes. Michelle gets it in 4.'],
+ [1903,'Six, five, six','Michelle and Jay both go the full six. Maddy escapes in five.'],
+ [1909,'One green, then all five','Maddy has one green tile through three guesses, then solves it on the fourth.'],
+ [1936,'The massacre','Michelle misses. Jay misses. Maddy solves it in 5. Hardest day of the season.'],
+ [1937,'Five yellows','Jay turns all five tiles yellow on guess two, then solves in three.'],
+ [1941,'Triple tie','All three solve it in 4. One of four three-way ties.'],
+ [1948,'Two for two','Maddy and Jay both solve it in 2.']
+].forEach(([n,t,d])=>{const b=el('button','mo',`<span class="d">${num(n)} · ${fd(n,{month:'short',day:'numeric'})}</span><h3>${t}</h3><p>${d}</p><span class="go">See the grids →</span>`);b.onclick=()=>pick(n,true);$('#moments').append(b)});
+
+pick(sel);
+</script>
+</body>
+</html>
