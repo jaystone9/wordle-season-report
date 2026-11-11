@@ -34,15 +34,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 /* hero */
 .hero{gap:22px;padding-top:10px}
-.title{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.title{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:6px}
 .ht{width:clamp(44px,11vw,92px);aspect-ratio:1;display:grid;place-items:center;font-family:var(--display);
   font-size:clamp(28px,7.4vw,62px);color:#fff;border:3px solid var(--ink);border-radius:10px;box-shadow:4px 4px 0 var(--ink);
   transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
 .ht:nth-child(odd){transform:rotate(-3deg)} .ht:nth-child(even){transform:rotate(2.5deg)}
 .ht:hover{transform:rotate(0) translateY(-8px) scale(1.06)}
 .ht.g{background:var(--green)} .ht.y{background:var(--yellow);color:var(--ink)} .ht.x{background:var(--ink)}
-.hero h1{font-size:clamp(30px,6vw,58px)}
-.hero h1 em{font-style:normal;background:var(--yellow);padding:0 .15em;border-radius:8px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.hero h1{font-size:clamp(30px,6vw,58px);line-height:1.2}
+.hero h1 em{font-style:normal;background:var(--yellow);padding:.08em .22em;border-radius:10px;display:inline-block;margin-top:.22em;line-height:1.15}
 .facts{display:flex;flex-wrap:wrap;gap:8px}
 .chip{background:var(--card);border:2px solid var(--ink);border-radius:999px;padding:4px 12px;font-weight:700;font-size:14px}
 
